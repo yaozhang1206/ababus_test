@@ -1,4 +1,14 @@
 #!/bin/bash
+#SBATCH --account=bdne-dtai-gh
+#SBATCH --partition=ghx4-interactive
+#SBATCH --job-name=hod_c009
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --gpus-per-node=1
+#SBATCH --cpus-per-task=72
+#SBATCH --mem=400G
+#SBATCH --time=01:00:00
+#SBATCH --output=/u/yzhang116/test_discodj/lh4000/abacus/logs/%x_%j.out
 # HOD galaxies on c009 halos (emulator / Abacus x 2 velocity copies) x (neutral, ext HOD), then P0/P2.
 set -u
 cd /u/yzhang116/test_discodj/lh4000/abacus
