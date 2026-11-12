@@ -134,6 +134,7 @@ def plot(R, path):
         ax[0, 3].plot(R["xcorr_random"]["k"], R["xcorr_random"]["r"], c="C2", ls=":", label="emu (random phases) x Abacus")
     ax[0, 3].axhline(0, c="0.6", lw=0.8)
     ax[0, 3].set_ylabel("$r_{hh}(k)$ real space"); ax[0, 3].set_ylim(-0.1, 1.02); ax[0, 3].legend(fontsize=7)
+    ax[0, 3].tick_params(labelbottom=True); ax[0, 3].set_xlim(0, 0.4)   # shared-x hides labels when ax[1, 3] is off
     ax[1, 3].axis("off")
     ax[0, 0].set_yscale("log"); ax[0, 0].set_ylabel("M dn/dlogM [(h/Mpc)^3]"); ax[1, 0].set_ylabel("ratio to Abacus")
     ax[0, 1].set_ylabel("$k P_0$"); ax[0, 2].set_ylabel("$k P_2$")
