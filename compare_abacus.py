@@ -130,11 +130,10 @@ def plot(R, path):
         ax[1, 1 + j].fill_between(ab["k"][s], (1 - e / np.abs(ab[key]))[s], (1 + e / np.abs(ab[key]))[s], color="k", alpha=0.15,
                                   label="Gaussian error, one 2 Gpc/h box")
     ax[0, 3].plot(R["xcorr"]["k"], R["xcorr"]["r"], c="C0", label="emu (Abacus phases) x Abacus")
-    if "xcorr_random" in R:
-        ax[0, 3].plot(R["xcorr_random"]["k"], R["xcorr_random"]["r"], c="C2", ls=":", label="emu (random phases) x Abacus")
-    ax[0, 3].axhline(0, c="0.6", lw=0.8)
-    ax[0, 3].set_ylabel("$r_{hh}(k)$ real space"); ax[0, 3].set_ylim(-0.1, 1.02); ax[0, 3].legend(fontsize=7)
-    ax[0, 3].tick_params(labelbottom=True); ax[0, 3].set_xlim(0, 0.4)   # shared-x hides labels when ax[1, 3] is off
+    ax[0, 3].set_ylabel("$r_{hh}(k)$ real space"); ax[0, 3].legend(fontsize=7)
+    ax[0, 3].set_xscale("log"); ax[0, 3].set_xlim(0.004, 0.42); ax[0, 3].set_ylim(0.75, 1.0)
+    ax[0, 3].grid(alpha=0.3, which="both"); ax[0, 3].set_xlabel("k [h/Mpc]")
+    ax[0, 3].tick_params(labelbottom=True)   # shared-x hides labels when ax[1, 3] is off
     ax[1, 3].axis("off")
     ax[0, 0].set_yscale("log"); ax[0, 0].set_ylabel("M dn/dlogM [(h/Mpc)^3]"); ax[1, 0].set_ylabel("ratio to Abacus")
     ax[0, 1].set_ylabel("$k P_0$"); ax[0, 2].set_ylabel("$k P_2$")
