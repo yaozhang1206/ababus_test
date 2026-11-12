@@ -97,6 +97,7 @@ def main():
 
 
 def plot(R, path):
+    """Columns: HMF | P0 raw | P0 - 1/nbar | P2 | r_hh(k).  Bottom row: ratios to Abacus."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -105,7 +106,13 @@ def plot(R, path):
            "emu": dict(c="C0", label="DISCO-DJ + transformer, Abacus phases"),
            "emu_random": dict(c="C2", ls=":", label="DISCO-DJ + transformer, random phases"),
            "abacus_nbodyconc_vel": dict(c="0.5", ls="--", lw=1, label="Abacus (nbodyconc velocities)")}
-    fig, ax = plt.subplots(2, 4, figsize=(17, 6.5), gridspec_kw=dict(height_ratios=[2.2, 1]), sharex="col")
+    pk_cols = [(1, "p0", "$k P_0$ (raw, incl. shot noise)"), (2, "p0s", r"$k\,[P_0 - 1/\bar n]$ (shot noise subtracted)"),
+               (3, "p2", "$k P_2$")]
+
+    def val(st, key):
+        return st["p0"] - 1.0 / st["nbar"] if key == "p0s" else st[key]
+
+    fig, ax = plt.subplots(2, 5, figsize=(21, 6.5), gridspec_kw=dict(height_ratios=[2.2, 1]), sharex="col")
     ab = R["abacus"]
     for name, st in R.items():
         if name not in sty:
@@ -119,35 +126,34 @@ def plot(R, path):
                               yerr=np.sqrt(1 / np.maximum(st["counts"], 1) + 1 / np.maximum(ab["counts"], 1))[okb],
                               marker="o", ms=3, capsize=2, c=sty[name]["c"], ls=sty[name].get("ls", "-"))
         s = np.isfinite(st["p0"])
-        for j, key in enumerate(["p0", "p2"]):
-            ax[0, 1 + j].plot(st["k"][s], st["k"][s] * st[key][s], **sty[name])
-            ax[1, 1 + j].plot(st["k"][s], st[key][s] / ab[key][s], c=sty[name]["c"], ls=sty[name].get("ls", "-"),
-                              lw=sty[name].get("lw", 1.5))
+        for c, key, _ in pk_cols:
+            ax[0, c].plot(st["k"][s], st["k"][s] * val(st, key)[s], **sty[name])
+            ax[1, c].plot(st["k"][s], val(st, key)[s] / val(ab, key)[s], c=sty[name]["c"], ls=sty[name].get("ls", "-"),
+                          lw=sty[name].get("lw", 1.5))
     e0, e2 = S2.gauss_err(ab)
     s = np.isfinite(ab["p0"])
-    for j, (key, e) in enumerate([("p0", e0), ("p2", e2)]):
-        ax[0, 1 + j].fill_between(ab["k"][s], (ab["k"] * (ab[key] - e))[s], (ab["k"] * (ab[key] + e))[s], color="k", alpha=0.15)
-        ax[1, 1 + j].fill_between(ab["k"][s], (1 - e / np.abs(ab[key]))[s], (1 + e / np.abs(ab[key]))[s], color="k", alpha=0.15,
-                                  label="Gaussian error, one 2 Gpc/h box")
-    ax[0, 3].plot(R["xcorr"]["k"], R["xcorr"]["r"], c="C0", label="emu (Abacus phases) x Abacus")
-    ax[0, 3].set_ylabel("$r_{hh}(k)$ real space"); ax[0, 3].legend(fontsize=7)
-    ax[0, 3].set_xscale("log"); ax[0, 3].set_xlim(0.004, 0.42); ax[0, 3].set_ylim(0.75, 1.0)
-    ax[0, 3].grid(alpha=0.3, which="both"); ax[0, 3].set_xlabel("k [h/Mpc]")
-    ax[0, 3].tick_params(labelbottom=True)   # shared-x hides labels when ax[1, 3] is off
-    ax[1, 3].axis("off")
+    for c, key, lab in pk_cols:
+        e, v = (e2 if key == "p2" else e0), val(ab, key)
+        ax[0, c].fill_between(ab["k"][s], (ab["k"] * (v - e))[s], (ab["k"] * (v + e))[s], color="k", alpha=0.15)
+        ax[1, c].fill_between(ab["k"][s], (1 - e / np.abs(v))[s], (1 + e / np.abs(v))[s], color="k", alpha=0.15,
+                              label="Gaussian error, one 2 Gpc/h box")
+        ax[0, c].set_ylabel(lab); ax[0, c].set_title(lab, fontsize=9)
+        ax[0, c].set_xscale("log"); ax[0, c].set_xlim(0.004, 0.5)
+        ax[1, c].set_ylim(0.85, 1.15); ax[1, c].axhline(1, c="0.6", lw=0.8); ax[1, c].set_xlabel("k [h/Mpc]")
+    ax[0, 2].text(0.03, 0.95, f"1/nbar: Abacus {1 / ab['nbar']:.0f}, emu {1 / R['emu']['nbar']:.0f} (Mpc/h)^3",
+                  transform=ax[0, 2].transAxes, fontsize=7, va="top")
+    ax[0, 4].plot(R["xcorr"]["k"], R["xcorr"]["r"], c="C0", label="emu (Abacus phases) x Abacus")
+    ax[0, 4].set_ylabel("$r_{hh}(k)$ real space"); ax[0, 4].legend(fontsize=7)
+    ax[0, 4].set_xscale("log"); ax[0, 4].set_xlim(0.004, 0.42); ax[0, 4].set_ylim(0.75, 1.0)
+    ax[0, 4].grid(alpha=0.3, which="both"); ax[0, 4].set_xlabel("k [h/Mpc]")
+    ax[0, 4].tick_params(labelbottom=True)   # shared-x hides labels when ax[1, 4] is off
+    ax[1, 4].axis("off")
     ax[0, 0].set_yscale("log"); ax[0, 0].set_ylabel("M dn/dlogM [(h/Mpc)^3]"); ax[1, 0].set_ylabel("ratio to Abacus")
-    ax[0, 1].set_ylabel("$k P_0$"); ax[0, 2].set_ylabel("$k P_2$")
-    for j in (1, 2):
-        ax[0, j].set_xscale("log"); ax[0, j].set_xlim(0.004, 0.5)
-        ax[1, j].set_ylim(0.85, 1.15); ax[1, j].axhline(1, c="0.6", lw=0.8)
-    ax[1, 0].set_ylim(0.7, 1.3); ax[1, 0].axhline(1, c="0.6", lw=0.8)
-    ax[1, 0].set_xlabel("log10 M [Msun/h]"); ax[1, 1].set_xlabel("k [h/Mpc]"); ax[1, 2].set_xlabel("k [h/Mpc]")
-    ax[0, 3].set_xlabel("k [h/Mpc]")
+    ax[1, 0].set_ylim(0.7, 1.3); ax[1, 0].axhline(1, c="0.6", lw=0.8); ax[1, 0].set_xlabel("log10 M [Msun/h]")
     ax[0, 0].legend(fontsize=7); ax[1, 1].legend(fontsize=7)
     fig.suptitle("z = 0.5, M > 5e12 Msun/h, 2 Gpc/h: AbacusSummit c009 (massless nu) vs DISCO-DJ + transformer")
     fig.tight_layout(); fig.savefig(path, dpi=110)
     print("saved", path)
-
 
 if __name__ == "__main__":
     main()
